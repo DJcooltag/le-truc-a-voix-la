@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PeerJS Audio Call</title>
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <h2>PeerJS Audio Chat</h2>
+
+  <label>Your ID:</label>
+  <input type="text" id="my-id" placeholder="Enter your ID"><br><br>
+
+  <label>Call ID:</label>
+  <input type="text" id="call-id" placeholder="Enter ID to call"><br><br>
+
+  <button onclick="start()">Start</button>
+  <button onclick="call()">Call</button>
+
+  <audio id="remote-audio" autoplay></audio>
+
+  <script>
+    let peer;
+    let localStream;
+
+    async function start() {
+      const id = document.getElementById("my-id").value;
+      peer = new Peer(id);
+
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      peer.on("call", call => {
+        call.answer(localStream);
+        call.on("stream", remoteStream => {
+          document.getElementById("remote-audio").srcObject = remoteStream;
+        });
+      });
+    }
+
+    function call() {
+      const callId = document.getElementById("call-id").value;
+      const call = peer.call(callId, localStream);
+      call.on("stream", remoteStream => {
+        document.getElementById("remote-audio").srcObject = remoteStream;
+      });
+    }
+  </script>
+</body>
+</html>
