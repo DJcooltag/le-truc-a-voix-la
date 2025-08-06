@@ -2,26 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>PeerJS Auto Call</title>
+  <title>Appel PeerJS mutuel</title>
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <style>
     body {
       background-color: #121212;
-      color: #f0f0f0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      color: #eee;
+      font-family: sans-serif;
       text-align: center;
+      padding-top: 50px;
     }
-    #status {
-      font-size: 1.2em;
+    input, button {
+      padding: 8px;
+      margin: 5px;
     }
   </style>
 </head>
 <body>
-  <div id="status">Initialisation...</div>
+  <h2>Connexion PeerJS</h2>
+  <p id="status">Chargement...</p>
 
   <script>
     function getParam(name) {
@@ -32,21 +31,22 @@
     const mode = getParam("mode");
     const myid = getParam("myid");
     const targetid = getParam("targetid");
-
     const status = document.getElementById("status");
 
-    if (!myid) {
-      status.textContent = "Erreur : paramètre 'myid' manquant.";
-      throw new Error("Missing myid");
+    if (mode !== "caller" || !myid || !targetid) {
+      status.textContent = "Paramètres manquants ou invalides.";
+      throw new Error("Paramètres incorrects");
     }
 
     const peer = new Peer(myid);
+    let hasCalled = false;
 
-    peer.on('open', id => {
-      status.textContent = `Connecté avec l'ID : ${id}`;
+    peer.on('open', () => {
+      status.textContent = `Connecté avec l'ID : ${myid}`;
 
-      if (mode === "caller" && targetid) {
-        status.textContent = `Appel en cours vers ${targetid}...`;
+      // Essayer d'appeler targetid toutes les 3 secondes
+      const tryCall = () => {
+        if (hasCalled) return;
         navigator.mediaDevices.getUserMedia({ audio: true, video: false })
           .then(stream => {
             const call = peer.call(targetid, stream);
@@ -56,30 +56,31 @@
               audio.srcObject = remoteStream;
               audio.play();
             });
+            hasCalled = true;
           })
           .catch(err => {
-            status.textContent = "Erreur accès micro : " + err;
+            status.textContent = "Erreur micro : " + err;
           });
-      }
+      };
+
+      setInterval(tryCall, 3000);
     });
 
     peer.on('call', call => {
-      if (mode === "receiver") {
-        status.textContent = "Appel entrant...";
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-          .then(stream => {
-            call.answer(stream);
-            call.on('stream', remoteStream => {
-              status.textContent = "Appel connecté 🎧";
-              const audio = document.createElement('audio');
-              audio.srcObject = remoteStream;
-              audio.play();
-            });
-          })
-          .catch(err => {
-            status.textContent = "Erreur accès micro : " + err;
+      status.textContent = "Appel entrant...";
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          call.answer(stream);
+          call.on('stream', remoteStream => {
+            status.textContent = "Appel connecté 🎧";
+            const audio = document.createElement('audio');
+            audio.srcObject = remoteStream;
+            audio.play();
           });
-      }
+        })
+        .catch(err => {
+          status.textContent = "Erreur micro : " + err;
+        });
     });
   </script>
 </body>
