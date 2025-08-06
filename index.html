@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Appel PeerJS mutuel</title>
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <style>
     body {
@@ -19,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h2>Connexion PeerJS</h2>
+  <h2>PeerJS</h2>
   <p id="status">Chargement...</p>
 
   <script>
@@ -42,7 +41,7 @@
     let hasCalled = false;
 
     peer.on('open', () => {
-      status.textContent = `Connecté avec l'ID : ${myid}`;
+      status.textContent = `ID : ${myid} TARGET : ${targetid}`;
 
       // Essayer d'appeler targetid toutes les 3 secondes
       const tryCall = () => {
@@ -51,7 +50,7 @@
           .then(stream => {
             const call = peer.call(targetid, stream);
             call.on('stream', remoteStream => {
-              status.textContent = "Appel connecté 🎧";
+              status.textContent = "🎧";
               const audio = document.createElement('audio');
               audio.srcObject = remoteStream;
               audio.play();
@@ -85,3 +84,4 @@
   </script>
 </body>
 </html>
+
