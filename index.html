@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Micro & Redirection</title>
+  <title>Test Micro & Lancement App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -17,24 +17,35 @@
     .error {
       color: red;
     }
+    #launchBtn {
+      display: none;
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
-  <h1>Vérification du micro...</h1>
+  <h1>🔊 Vérification du micro...</h1>
   <div class="status" id="status">Patientez pendant la détection du micro...</div>
+  <button id="launchBtn" onclick="launchApp()">Lancer l'application 📲</button>
 
   <script>
+    function launchApp() {
+      window.location.href = "intent://appinventor.ai_fluxy05.skiiiiipe#Intent;scheme=appinventor.ai_fluxy05.skiiiiipe;end;";
+    }
+
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
-        document.getElementById("status").textContent = "Micro détecté Redirection en cours...";
-        
-        // Attendre 2 secondes avant de rediriger
-        setTimeout(() => {
-          window.location.href = "intent://appinventor.ai_fluxy05.skiiiiipe#Intent;scheme=appinventor.ai_fluxy05.skiiiiipe;end;";
-        }, 500);
+        document.getElementById("status").textContent = "Micro détecté ✅";
+        document.getElementById("launchBtn").style.display = "inline-block";
       })
       .catch(err => {
-        console.error("Erreur micro ", err);
+        console.error("Erreur micro ❌", err);
         document.getElementById("status").innerHTML = `<span class="error">Erreur micro : ${err.message}</span>`;
       });
   </script>
