@@ -2,52 +2,86 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Micro & Lancement App</title>
+  <title></title></title>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #eee;
+      font-family: sans-serif;
       text-align: center;
       padding-top: 50px;
-      background-color: #f0f0f0;
     }
-    .status {
-      font-size: 1.2em;
-      margin-top: 20px;
-    }
-    .error {
-      color: red;
-    }
-    #launchBtn {
-      display: none;
-      margin-top: 30px;
-      padding: 10px 20px;
-      font-size: 1em;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
+    input, button {
+      padding: 8px;
+      margin: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>🔊 Vérification du micro...</h1>
-  <div class="status" id="status">Patientez pendant la détection du micro...</div>
-  <button id="launchBtn" onclick="launchApp()">Lancer l'application 📲</button>
+  <h2>PeerJS</h2>
+  <p id="status">🌐 Chargement</p>
 
   <script>
-    function launchApp() {
-      window.location.href = "intent://appinventor.ai_fluxy05.skiiiiipe#Intent;scheme=appinventor.ai_fluxy05.skiiiiipe;end;";
+    function getParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
     }
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        document.getElementById("status").textContent = "Micro détecté ✅";
-        document.getElementById("launchBtn").style.display = "inline-block";
-      })
-      .catch(err => {
-        console.error("Erreur micro ❌", err);
-        document.getElementById("status").innerHTML = `<span class="error">Erreur micro : ${err.message}</span>`;
-      });
+    const mode = getParam("mode");
+    const myid = getParam("myid");
+    const targetid = getParam("targetid");
+    const status = document.getElementById("status");
+
+    if (mode !== "caller" || !myid || !targetid) {
+      status.textContent = "Paramètres manquants ou invalides.";
+      throw new Error("Paramètres incorrects");
+    }
+
+    const peer = new Peer(myid);
+    let hasCalled = false;
+
+    peer.on('open', () => {
+      status.textContent = `ID : '${myid}' TARGETID : '${targetid} ⏳ Attente'`;
+
+      // Essayer d'appeler targetid toutes les 3 secondes
+      const tryCall = () => {
+        if (hasCalled) return;
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(stream => {
+            const call = peer.call(targetid, stream);
+            call.on('stream', remoteStream => {
+              status.textContent = "🎧 Connecté";
+              const audio = document.createElement('audio');
+              audio.srcObject = remoteStream;
+              audio.play();
+            });
+            hasCalled = true;
+          })
+          .catch(err => {
+            status.textContent = "Erreur micro : " + err;
+          });
+      };
+
+      setInterval(tryCall, 3000);
+    });
+
+    peer.on('call', call => {
+      status.textContent = "☎️ Entrant";
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          call.answer(stream);
+          call.on('stream', remoteStream => {
+            status.textContent = "🎧 Connecté";
+            const audio = document.createElement('audio');
+            audio.srcObject = remoteStream;
+            audio.play();
+          });
+        })
+        .catch(err => {
+          status.textContent = "Erreur micro : " + err;
+        });
+    });
   </script>
 </body>
 </html>
