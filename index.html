@@ -2,86 +2,41 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <title>Test Micro & Redirection</title>
   <style>
     body {
-      background-color: #121212;
-      color: #eee;
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
       padding-top: 50px;
+      background-color: #f0f0f0;
     }
-    input, button {
-      padding: 8px;
-      margin: 5px;
+    .status {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+    .error {
+      color: red;
     }
   </style>
 </head>
 <body>
-  <h2>PeerJS</h2>
-  <p id="status">Chargement...</p>
+  <h1>Vérification du micro...</h1>
+  <div class="status" id="status">Patientez pendant la détection du micro...</div>
 
   <script>
-    function getParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
-    }
-
-    const mode = getParam("mode");
-    const myid = getParam("myid");
-    const targetid = getParam("targetid");
-    const status = document.getElementById("status");
-
-    if (mode !== "caller" || !myid || !targetid) {
-      status.textContent = "Paramètres manquants ou invalides.";
-      throw new Error("Paramètres incorrects");
-    }
-
-    const peer = new Peer(myid);
-    let hasCalled = false;
-
-    peer.on('open', () => {
-      status.textContent = `ID : ${myid} TARGET : ${targetid}`;
-
-      // Essayer d'appeler targetid toutes les 3 secondes
-      const tryCall = () => {
-        if (hasCalled) return;
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-          .then(stream => {
-            const call = peer.call(targetid, stream);
-            call.on('stream', remoteStream => {
-              status.textContent = "🎧";
-              const audio = document.createElement('audio');
-              audio.srcObject = remoteStream;
-              audio.play();
-            });
-            hasCalled = true;
-          })
-          .catch(err => {
-            status.textContent = "Erreur micro : " + err;
-          });
-      };
-
-      setInterval(tryCall, 3000);
-    });
-
-    peer.on('call', call => {
-      status.textContent = "Appel entrant...";
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(stream => {
-          call.answer(stream);
-          call.on('stream', remoteStream => {
-            status.textContent = "Appel connecté 🎧";
-            const audio = document.createElement('audio');
-            audio.srcObject = remoteStream;
-            audio.play();
-          });
-        })
-        .catch(err => {
-          status.textContent = "Erreur micro : " + err;
-        });
-    });
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        document.getElementById("status").textContent = "Micro détecté Redirection en cours...";
+        
+        // Attendre 2 secondes avant de rediriger
+        setTimeout(() => {
+          window.location.href = "intent://appinventor.ai_fluxy05.skiiiiipe#Intent;scheme=appinventor.ai_fluxy05.skiiiiipe;end;";
+        }, 500);
+      })
+      .catch(err => {
+        console.error("Erreur micro ", err);
+        document.getElementById("status").innerHTML = `<span class="error">Erreur micro : ${err.message}</span>`;
+      });
   </script>
 </body>
 </html>
-
